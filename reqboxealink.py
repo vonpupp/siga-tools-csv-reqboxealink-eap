@@ -125,54 +125,36 @@ class ReqBoxLinker():
    
    def linksourcetodestination(self):
       for i in range(1, len(self.relmatrix)):
-#      sPackage = nsPackageFetch(pSourceNS, sMap);
-#      dPackage = nsPackageFetch(pDestinationNS, dMap);
-#
-#        for (i = 1; i < relMatrix.length; i++) {
-#            sElement = sMap.get(relMatrix[i][0]);
-#            dElement = dMap.get(relMatrix[i][1]);
-#            //out.printf("testing... %s vs. %s\n", relMatrix[i][0].substring(0, 6));
-#            //out.printf("testing... %s vs. %s\n", relMatrix[i][1].substring(0, 6));
-#            if (sElement == null){
-#                out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][0], pSourceNS);
-#            } else {
-#                out.printf("Source element found... %s\n", sElement.GetName());
-#                if (dElement == null){
-#                    out.printf("SKIPPING (not found): %s on namespace: %s\n", relMatrix[i][1], pDestinationNS);
-#                } else {
-#                    relsdname = relMatrix[i][2];
-#                    reltype   = relMatrix[i][3];
-#                    if (relMatrix[i][2].compareToIgnoreCase("auto") == 0 || 
-#                        relMatrix[i][2].equals("")) {
-#                        relsdname = "rel-" + relMatrix[i][0] + "-" +
-#                            relMatrix[i][1];
-#                        reldsname = "rel-" + relMatrix[i][1] + "-" +
-#                            relMatrix[i][0];
-#                    }
-#                    out.printf("Destination element found... %s\n", dElement.GetName());
-#                    
-#                    // Source -> Destination relation
-#                    out.printf("Doing the magic tricks: creating relation [%s] between [%s] and [%s] (type [%s])\n",
-#                        relsdname, sElement.GetName(), dElement.GetName(), reltype);
-#                    
+         salias = self.relmatrix[i][0]
+         dalias = self.relmatrix[i][1]
+         selement = None
+         delement = None
+         if salias in self.sdict:
+            selement = self.sdict[self.relmatrix[i][0]]
+         if dalias in self.ddict:
+            delement = self.ddict[self.relmatrix[i][0]]
+         if selement is None:
+            print("  NOT FOUND: Source element: %s" % salias);
+         else:
+            if delement is None:
+               print("  NOT FOUND: Destination element: %s" % dalias);
+            else:
+               linkname = relMatrix[i][2]
+               linktype = relMatrix[i][3]
+               if linkname is 'auto' or linkname is '':
+                  linkname = "rel-" + relMatrix[i][0] + "-" + relMatrix[i][1]
+               
+               print("  Linking: %s -> %s" % (salias, dalias))
+               linkconnection = selement.Connector.AddNew(linkname, linktype)
+               linkconnection.SetSupplierID(delement.ElementID)
+               linkconnection.update
+               selement.Refresh()
+
 #                    sdcon = sElement.GetConnectors().AddNew(relsdname, reltype);
 #                    sdcon.SetSupplierID(dElement.GetElementID());
 #                    sdcon.Update();
 #                    sElement.Refresh();
 #                    
-#                    // Destination -> Source
-#//                    out.printf("Doing the magic tricks: creating relation [%s] between [%s] and [%s]\n",
-#//                        reldsname, dElement.GetName(), sElement.GetName());
-#//                    
-#//                    dscon = dElement.GetConnectors().AddNew(reldsname, "Realization");
-#//                    dscon.SetSupplierID(sElement.GetElementID());
-#//                    dscon.Update();
-#//                    dElement.Refresh();
-#                }
-#            }
-#        }
-#    }
-
 
 def main(argv):
    try:
@@ -213,6 +195,7 @@ def main(argv):
    print("Loading: " + rl.destinationns() + " destination namespace")
    rl.nspackagefetch(rl.destinationns(), rl.ddict)
 
+   print("Linking...")
    rl.linksourcetodestination()
    
 if __name__ == "__main__":
