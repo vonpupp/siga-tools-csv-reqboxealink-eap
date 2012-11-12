@@ -33,32 +33,25 @@
 #   Compiler Options:
 
 """
-   EA Links tool. [see siga-tools-ea]
+   EA Links tool. [see siga-tools-*-reqbox-*]
    
-   This program will load from a doc file an implied hierarchy or relations and will produce several ouputs
+   This program will load relations from a csv file and apply them into a eap file
 
    Command Line Usage:
-      reqbox {<option> <argument>}
+      reqboxealink {<option> <argument>}
 
    Options:
       -h, --help                          Print this help and exit.
-      -a, --export-all                    Parse all
-      --parse-v1 / --parse-v2             Prints items in that level
 
    Examples:
-       reqbox.py -a --parse-v2 ./data/LFv14.ms.default.fixed.txt
-
-   Note:
-      Please note that the csv files dir is hardcoded into the application
-      to make command line arguments easier.
-       
-       The csv files are:
-         - in-rfn-objects.csv
-         - in-rgn-objects.csv
-         - in-rnf-objects.csv
+      reqboxealink.py --eap test.eap --links links.csv
 """
+
+import getopt
 import win32com.client
 import sys
+import codecs
+import csv
 
 class ReqBoxLinker():
    """ Reqbox
@@ -66,10 +59,14 @@ class ReqBoxLinker():
       - ea: Dispatch based COM object
    """
    ea = None
+   relmatrix = []
     
    def __init__(self):
       # Public
       # Init structures
+      pass
+   
+   def getdispatcher(self):
       try:
          # Dispatch
          ea = win32com.client.Dispatch('EA.Repository')
@@ -77,26 +74,30 @@ class ReqBoxLinker():
          print "failure dispatch"
          sys.exit(2)
         
-   def open(self, filename):
+   def loadeap(self):
       try:
          # Open file
-         o.OpenFile2(filename,1,0)
-         #o.OpenFile2('/cygdrive/c/siga-tools-ea-relation/SIGA.EAP',1,0)
-         #o.OpenFile2('SIGA.EAP',1,0)
+         o.OpenFile2(self.eapfile, 1, 0)
+         #o.OpenFile2('/cygdrive/c/siga-tools-ea-relation/SIGA.EAP', 1, 0)
+         #o.OpenFile2('SIGA.EAP', 1, 0)
       except:
          print "failure opening file"
          sys.exit(2)
    
-   def loadlinks(self, filename):
-      pass
+   def loadlinks(self):
+      f = codecs.open(self.linksfile, encoding='utf-8', mode='r')
+      reader = csv.reader(f, delimiter='\t')
+      self.relmatrix = []
+      reader.next()
+      for row in reader:
+         self.relmatrix += [row]
 
-   def loadlinks(self, filename):
+   def loadeapa(self):
       pass
 
 def main(argv):
    try:
-      optlist, args = getopt.getopt(argv[1:], 'hv:e:l:', ['help', 'verbose',
-         'eap', 'links'])
+      opts, args = getopt.getopt(argv, 'he:l:', ['help', 'eap', 'links'])
    except getopt.GetoptError, msg:
       sys.stderr.write("reqboxealink: error: %s" % msg)
       sys.stderr.write("See 'reqboxealink --help'.\n")
@@ -107,25 +108,20 @@ def main(argv):
     
    rl = ReqBoxLinker()
    
-   for opt, optarg in optlist:
+   for opt, arg in opts:
       if opt in ('-h', '--help'):
          sys.stdout.write(__doc__)
          return 0
-      elif opt in ('-v', '--verbose'):
-         pass
+      elif opt in ('-e', '--eap'):
+         rl.eafile = arg
+      elif opt in ('-l', '--links'):
+         rl.linksfile = arg
       
-      rb.eafile = args[0]
-      rb.linksfile = args[1]
-      rb.parseall = rb.parseall or opt in ('-a', '--export-all')
-      rb.parsefun = rb.parseall or rb.parsefun or opt in ('-f', '--export-fun')
-      rb.parserfi = rb.parseall or rb.parserfi or opt in ('-i', '--export-rfi')
-      rb.parserfn = rb.parseall or rb.parserfn or opt in ('-r', '--export-rfn')
-      rb.parsernf = rb.parseall or rb.parsernf or opt in ('-n', '--export-rnf')
-      rb.parsergn = rb.parseall or rb.parsergn or opt in ('-g', '--export-rgn')
-      rb.parseext = rb.parseall or rb.parseext or opt in ('-e', '--export-ext')
-      rb.parseinc = rb.parseall or rb.parseinc or opt in ('-n', '--export-inc')
-      rb.parseimp = rb.parseall or rb.parseimp or opt in ('-m', '--export-imp')
-      rb.inobjects = opt in ('-o', '--in-objects')
+      #rl.parseall = rb.parseall or opt in ('-a', '--export-all')
    
    rl.loadlinks()
-   rl.open('C:\siga-tools-ea-relation\SIGA.EAP')
+   rl.getdispatcher()
+   rl.loadeap()
+   
+if __name__ == "__main__":
+   sys.exit(main(sys.argv[1:]))
