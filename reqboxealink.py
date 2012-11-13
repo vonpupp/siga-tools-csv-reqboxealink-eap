@@ -118,7 +118,9 @@ class ReqBoxLinker():
          
       for i in xrange(0, package.Elements.Count):
          element = package.Elements.GetAt(i)
-         print("    Mapping element: %s" % element.Name);
+         name = element.Name
+         #name = element.Name.decode('latin1')
+         print("    Mapping element: %s" % name.encode('utf-8'));
          alias = element.Alias
          dictstruc[alias] = element
       pass
@@ -132,29 +134,44 @@ class ReqBoxLinker():
          if salias in self.sdict:
             selement = self.sdict[self.relmatrix[i][0]]
          if dalias in self.ddict:
-            delement = self.ddict[self.relmatrix[i][0]]
+            delement = self.ddict[self.relmatrix[i][1]]
          if selement is None:
-            print("  NOT FOUND: Source element: %s" % salias);
+            print("  MISSING: %s (NOT FOUND) -> %s" % (salias, dalias))
          else:
             if delement is None:
-               print("  NOT FOUND: Destination element: %s" % dalias);
+               print("  MISSING: %s -> %s (NOT FOUND)" % (salias, dalias))
             else:
-               linkname = relMatrix[i][2]
-               linktype = relMatrix[i][3]
+               linkname = self.relmatrix[i][2]
+               linktype = self.relmatrix[i][3]
                if linkname is 'auto' or linkname is '':
-                  linkname = "rel-" + relMatrix[i][0] + "-" + relMatrix[i][1]
+                  linkname = "rel-" + self.relmatrix[i][0] + "-" + self.relmatrix[i][1]
                
-               print("  Linking: %s -> %s" % (salias, dalias))
-               linkconnection = selement.Connector.AddNew(linkname, linktype)
-               linkconnection.SetSupplierID(delement.ElementID)
-               linkconnection.update
+               linksubtype = None
+               # TODO: Refactor this
+               if 'Extends' == linktype:
+                  linksubtype = linktype
+                  linktype = 'UseCase'
+               elif 'Implements' == linktype:
+                  pass
+               elif 'Includes' == linktype:
+                  linksubtype = linktype
+                  linktype = 'UseCase'
+                  
+               print("  Linking: %s -> %s [%s, %s]" % (salias, dalias, linkname, linktype))
+               linkconnection = selement.Connectors.AddNew(linkname, linktype)
+               linkconnection.SupplierID = delement.ElementID
+               #linkconnection.SetSupplierID(delement.ElementID)
+               
+               # TODO: Refactor this
+               if 'Extends' == linksubtype:
+                  linkconnection.Subtype = linksubtype
+               elif 'Implements' == linksubtype:
+                  pass
+               elif 'Includes' == linksubtype:
+                  linkconnection.Subtype = linksubtype
+               
+               linkconnection.Update()
                selement.Refresh()
-
-#                    sdcon = sElement.GetConnectors().AddNew(relsdname, reltype);
-#                    sdcon.SetSupplierID(dElement.GetElementID());
-#                    sdcon.Update();
-#                    sElement.Refresh();
-#                    
 
 def main(argv):
    try:
