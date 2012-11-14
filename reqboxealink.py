@@ -147,27 +147,19 @@ class ReqBoxLinker():
                   linkname = "rel-" + self.relmatrix[i][0] + "-" + self.relmatrix[i][1]
                
                linksubtype = None
-               # TODO: Refactor this
-               if 'Extends' == linktype:
+               subtypes = ['Extends', 'Includes']
+               if linktype in subtypes:
                   linksubtype = linktype
                   linktype = 'UseCase'
-               elif 'Implements' == linktype:
-                  pass
-               elif 'Includes' == linktype:
-                  linksubtype = linktype
-                  linktype = 'UseCase'
-                  
-               print("  Linking: %s -> %s [%s, %s]" % (salias, dalias, linkname, linktype))
+                  print("  Linking: %s -> %s [%s, %s (%s)]" % (salias, dalias, linkname, linktype, linksubtype))
+               else:
+                  print("  Linking: %s -> %s [%s, %s]" % (salias, dalias, linkname, linktype))
                linkconnection = selement.Connectors.AddNew(linkname, linktype)
                linkconnection.SupplierID = delement.ElementID
                #linkconnection.SetSupplierID(delement.ElementID)
                
                # TODO: Refactor this
-               if 'Extends' == linksubtype:
-                  linkconnection.Subtype = linksubtype
-               elif 'Implements' == linksubtype:
-                  pass
-               elif 'Includes' == linksubtype:
+               if linksubtype in subtypes:
                   linkconnection.Subtype = linksubtype
                
                linkconnection.Update()
